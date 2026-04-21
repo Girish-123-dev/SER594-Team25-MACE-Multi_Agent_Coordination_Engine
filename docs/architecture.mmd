@@ -1,0 +1,71 @@
+graph TB
+    subgraph Frontend["React Frontend (Vite :5173)"]
+        Login["Login Page"]
+        Register["Register Page"]
+        Dashboard["Dashboard Page"]
+        TaskHistory["Task History"]
+        APIClient["Axios API Client"]
+    end
+
+    subgraph Backend["FastAPI Backend (:8000)"]
+        subgraph Auth["Authentication"]
+            AuthRouter["/api/auth/*<br/>register, login, me"]
+            JWT["JWT Token Manager<br/>(PyJWT + bcrypt)"]
+        end
+
+        subgraph Orchestrator["Orchestrator Pipeline"]
+            OrcRouter["/api/orchestrator/run"]
+            IntentParser["Intent Parser<br/>(Claude LLM)"]
+            TaskRouter["Task Router"]
+            ConflictDetector["Conflict Detector<br/>(FAISS duplicate check)"]
+        end
+
+        subgraph Services["Services"]
+            LLMService["LLM Service<br/>(Anthropic Claude)<br/>• Retries (3x)<br/>• Token tracking<br/>• Provider-agnostic"]
+        end
+    end
+
+    subgraph DataLayer["Data Layer"]
+        SQLite[("SQLite<br/>• users<br/>• tasks<br/>• conflicts")]
+        FAISS[("FAISS Index<br/>• Intent embeddings<br/>• 384-dim vectors")]
+        SentenceTransformers["Sentence Transformers<br/>(all-MiniLM-L6-v2)"]
+    end
+
+    subgraph External["External APIs"]
+        Claude["Anthropic Claude API"]
+    end
+
+    %% Frontend connections
+    Login --> APIClient
+    Register --> APIClient
+    Dashboard --> APIClient
+    TaskHistory --> APIClient
+    APIClient -->|"REST API (JSON)"| AuthRouter
+    APIClient -->|"REST API (JSON)"| OrcRouter
+
+    %% Auth flow
+    AuthRouter --> JWT
+    AuthRouter --> SQLite
+
+    %% Orchestrator flow
+    OrcRouter --> ConflictDetector
+    ConflictDetector -->|"Embed & search"| FAISS
+    ConflictDetector -->|"No duplicate"| IntentParser
+    IntentParser --> LLMService
+    LLMService --> Claude
+    IntentParser --> TaskRouter
+    TaskRouter --> SQLite
+
+    %% Embedding
+    SentenceTransformers --> FAISS
+
+    %% Styling
+    classDef frontend fill:#e3f2fd,stroke:#1565c0,color:#0d47a1
+    classDef backend fill:#fff3e0,stroke:#e65100,color:#bf360c
+    classDef data fill:#e8f5e9,stroke:#2e7d32,color:#1b5e20
+    classDef external fill:#fce4ec,stroke:#c62828,color:#b71c1c
+
+    class Login,Register,Dashboard,TaskHistory,APIClient frontend
+    class AuthRouter,JWT,OrcRouter,IntentParser,TaskRouter,ConflictDetector,LLMService backend
+    class SQLite,FAISS,SentenceTransformers data
+    class Claude external

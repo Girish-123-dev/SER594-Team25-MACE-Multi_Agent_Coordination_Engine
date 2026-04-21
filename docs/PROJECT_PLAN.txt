@@ -1,0 +1,993 @@
+================================================================================
+  MACE — Multi-Agent Coordination Engine
+  COMPLETE PROJECT PLAN (All Milestones)
+  SER 594: AI for Software Engineers — Team 25
+================================================================================
+
+Table of Contents
+─────────────────
+  1.  Project Overview
+  2.  Team Roster & Responsibilities
+  3.  Tech Stack (Final)
+  4.  Spec Requirements Checklist (Everything We Must Deliver)
+  5.  Milestone 1 — Setup & Proposal (20%) ✅ DONE
+  6.  Milestone 2 — Design & Prototype (20%)
+  7.  Milestone 3 — Implementation (30%)
+  8.  Milestone 4 — Final Submission (30%)
+  9.  AI Techniques — Deep Breakdown (4 Techniques)
+  10. Three Demo Scenarios — Exactly How They Work
+  11. API Contract (All Endpoints)
+  12. Database Schema
+  13. Frontend Pages & User Actions
+  14. Test Plan (15+ Tests)
+  15. Evaluation Plan (Metrics + Baselines)
+  16. Deployment Plan
+  17. Git Workflow & Branch Strategy
+  18. Risk Register
+  19. Week-by-Week Execution Timeline
+
+
+================================================================================
+1. PROJECT OVERVIEW
+================================================================================
+
+What MACE Does:
+  MACE is a multi-agent orchestration system. A user types a natural-language
+  request into a web UI. The system:
+    1. Parses the user's intent using an LLM (Claude)
+    2. Routes subtasks to the right agent (Support Agent or Domain Agent)
+    3. Detects conflicts (duplicate intents, resource clashes, dependency chains)
+    4. Resolves conflicts via rule-based or LLM-powered arbitration
+    5. Stores everything in shared memory so agents coordinate, not collide
+
+Who It's For:
+  Teams or orgs running multiple AI agents that need to work together without
+  duplicating work, conflicting on resources, or breaking sequential workflows.
+
+Why It Matters:
+  Current multi-agent setups are isolated silos. Each agent has no awareness of
+  what others are doing. MACE adds the coordination layer that's missing.
+
+
+================================================================================
+2. TEAM ROSTER & RESPONSIBILITIES
+================================================================================
+
+  Name                      GitHub               Primary Owns             Secondary
+  ────────────────────────  ───────────────────  ────────────────────────  ──────────────
+  Akash Manilal Agarwal     @AkashAgarwalSER515  Orchestrator (LangGraph)  Deployment
+  Arpit Anil Jaiswal        @ajaisw43            Support Agent + Auth      Memory layer
+  Girish Subhash Nalawade   @Girish-123-dev      Domain Agent + FAISS      Conflict detection
+  Anmol Sudhir Monde        @AnmolMonde          Frontend (React) + Eval   Testing
+
+  Rule: Every team member MUST have commits in the git log. Zero commits = zero grade.
+  Rule: Use branches + pull requests. No direct commits to main.
+
+
+================================================================================
+3. TECH STACK (FINAL)
+================================================================================
+
+  Layer         Technology                   Why
+  ───────────   ─────────────────────────    ──────────────────────────────────────
+  Frontend      React 18, Vite, React Router Spec requires separate frontend/backend
+                Axios                        communicating over a defined API (§3.2)
+  Backend       Python 3.11+, FastAPI        Async, fast, built-in validation
+                Uvicorn                      ASGI server
+  AI/ML         Anthropic Claude (API)       LLM for intent parsing + arbitration
+                LangGraph                    State-graph orchestration
+                FAISS (faiss-cpu)            Vector similarity for deduplication
+                sentence-transformers        Embedding model for FAISS
+  Database      SQLite                       Relational store (users, tasks, conflicts)
+                FAISS index on disk          Vector store (embeddings)
+  Auth          JWT (PyJWT + bcrypt)         Spec requires auth with 2+ user sessions (§3.3)
+  Deployment    Docker + Docker Compose      Spec allows Docker for local demo (§3.5)
+                GCP Cloud Run (optional)     Public URL for final submission
+  CI            GitHub Actions               Spec requires CI with tests on push (§5.1)
+  Formatting    Black (Python), Prettier (JS) Spec requires consistent formatting (§6.3)
+
+  Everything is free / free via ASU. No paid tools required to build or run.
+
+
+================================================================================
+4. SPEC REQUIREMENTS CHECKLIST
+================================================================================
+
+  From the project specification, here is EVERY requirement and where we satisfy it:
+
+  §3.2 Full-Stack Application
+    [x] Frontend (React web UI)
+    [x] Backend (FastAPI API server)
+    [x] Frontend ↔ Backend over REST API
+
+  §3.3 Authentication
+    [x] User registration and login (JWT)
+    [x] At least two distinct user sessions (different users see different data)
+
+  §3.4 Data Layer
+    [x] Persistent data store — SQLite (relational)
+    [x] Vector store — FAISS (for semantic search / deduplication)
+    [x] Data persists across sessions (not in-memory-only)
+
+  §3.5 Deployment
+    [x] Docker Compose for reproducible local deployment
+    [ ] Public URL (to be added M3/M4 — GCP or Docker demo)
+
+  §3.6 User Interaction
+    [x] Interactive web UI (not batch/notebook)
+    [x] 3+ distinct user actions:
+        1. Submit a natural-language request
+        2. View task/conflict history
+        3. Provide feedback / override AI arbitration decisions
+
+  §4 AI Techniques (need 3+, we do 4)
+    [x] 1. LLM API Integration (Claude with abstraction, retries, token tracking)
+    [x] 2. AI Agents / Multi-Step Workflows (LangGraph orchestrator, 3+ tools)
+    [x] 3. Vector Search / Embeddings (FAISS intent deduplication pipeline)
+    [x] 4. Memory / Conversation Management (persistent shared state)
+
+  §5.1 Test Suite
+    [x] 15+ unit/integration tests (pytest + vitest)
+    [x] Covers: API endpoints, data layer, AI pipeline, auth flows
+    [x] Single command: pytest tests/ and npm test
+    [x] CI config: .github/workflows/ci.yml
+
+  §5.2 AI Evaluation Metrics
+    [ ] At least 2 quantitative metrics (to be computed M3/M4)
+    [ ] Baseline comparison (e.g., no-FAISS vs. FAISS)
+
+  §5.3 System Evaluation
+    [ ] Response latency p50/p95
+    [ ] Error rate
+    [ ] Test coverage %
+
+  §6.1 GitHub Repository
+    [x] Private repo, instructor/TAs added
+    [x] Steady commit cadence (spread across timeline, not last-minute burst)
+    [x] Branches + pull requests
+
+  §6.2 README
+    [x] Project title + description
+    [x] Architecture diagram
+    [x] Setup instructions
+    [x] .env.example
+    [ ] How to run tests (documented, need to verify commands work)
+    [ ] How to run evaluation suite (M3/M4)
+    [ ] Deployment URL (M3/M4)
+    [x] Team member names + responsibilities
+
+  §6.3 Code Quality
+    [ ] Black + Prettier formatting (enforce from M2 onward)
+    [x] No secrets in repo (.gitignore covers .env)
+    [x] Dependencies in requirements.txt + package.json
+
+  §7 Project Structure
+    [x] Monorepo with frontend/, backend/, eval/, tests/, docs/
+
+
+================================================================================
+5. MILESTONE 1 — SETUP & PROPOSAL (20%) ✅ DONE
+================================================================================
+
+  Deliverable                              Status    Notes
+  ───────────────────────────────────────  ────────  ──────────────────────────
+  Team formation                           ✅ Done   4 members
+  GitHub repo created + linked             ✅ Done   SER594-Team25-MACE-...
+  README with setup instructions           ✅ Done   Full setup, deps, env vars
+  .env.example                             ✅ Done   All config vars listed
+  Development environment configured       ✅ Done   Backend + Frontend + Docker + CI
+  Proposal PDF on Canvas                   ⬜ TODO   Needs ASU IDs, abstract, etc.
+  Team roster with ASU IDs                 ⬜ TODO   In proposal PDF
+
+  Files created in M1:
+    .env.example, .gitignore, docker-compose.yml, README.md
+    .github/workflows/ci.yml
+    backend/  (Dockerfile, requirements.txt, app/main.py, config.py, routers/, services/)
+    frontend/ (Dockerfile, package.json, vite.config.js, index.html, src/*)
+    tests/    (test_api.py, test_database.py)
+    eval/     (placeholder)
+    docs/     (empty, for proposal)
+
+
+================================================================================
+6. MILESTONE 2 — DESIGN & PROTOTYPE (20%)
+================================================================================
+
+  Deliverables required by spec:
+    1. Architecture diagram finalized (image or Mermaid in docs/)
+    2. Data pipeline operational (FAISS embedding pipeline working)
+    3. AI technique #1 integrated (LLM API — Claude)
+    4. Basic frontend scaffold (Login, Register, Dashboard — already done)
+    5. Authentication working end-to-end (React → FastAPI → SQLite → JWT)
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ TASK BREAKDOWN                                                         │
+  ├────┬──────────────────────────────────────┬─────────┬──────────────────┤
+  │ #  │ Task                                 │ Owner   │ Files to create  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 1  │ Architecture diagram (Mermaid/PNG)   │ Akash   │ docs/arch.png    │
+  │    │ Export the ASCII diagram to a real    │         │ docs/arch.mmd    │
+  │    │ image. Mermaid or draw.io.           │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 2  │ Auth end-to-end verification         │ Arpit   │ (existing files) │
+  │    │ Test: Register on React → JWT token  │         │                  │
+  │    │ returned → Dashboard accessible →    │         │                  │
+  │    │ /api/auth/me returns correct user.   │         │                  │
+  │    │ Test with TWO different users (spec  │         │                  │
+  │    │ §3.3 requires 2+ user sessions).     │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 3  │ FAISS embedding pipeline             │ Girish  │ backend/app/     │
+  │    │                                      │         │   memory/        │
+  │    │ Steps:                               │         │   embeddings.py  │
+  │    │ a) Load sentence-transformers model  │         │                  │
+  │    │    (all-MiniLM-L6-v2, 384-dim)       │         │ backend/app/     │
+  │    │ b) Embed an input string → vector    │         │   memory/        │
+  │    │ c) Add vector to FAISS index         │         │   faiss_store.py │
+  │    │ d) Search index for similar vectors  │         │                  │
+  │    │ e) Persist index to disk at          │         │                  │
+  │    │    FAISS_INDEX_PATH                  │         │                  │
+  │    │ f) Unit test: embed 2 similar        │         │                  │
+  │    │    sentences, verify similarity      │         │                  │
+  │    │    score > 0.85                      │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 4  │ Claude API integration (Technique 1) │ Akash   │ backend/app/     │
+  │    │                                      │         │   services/      │
+  │    │ Requirements (spec §4.1):            │         │   llm.py         │
+  │    │ a) API key management (from .env)    │         │                  │
+  │    │ b) Error handling + retries (3x      │         │                  │
+  │    │    with exponential backoff)         │         │                  │
+  │    │ c) Token/cost tracking (log input/   │         │                  │
+  │    │    output tokens per request)        │         │                  │
+  │    │ d) Swappable wrapper (so             │         │                  │
+  │    │    model can be swapped later)       │         │                  │
+  │    │ e) Structured output parsing (JSON)  │         │                  │
+  │    │                                      │         │                  │
+  │    │ Interface:                           │         │                  │
+  │    │   class LLMService:                  │         │                  │
+  │    │     async def complete(prompt,       │         │                  │
+  │    │       system_prompt, output_schema)  │         │                  │
+  │    │       -> LLMResponse                 │         │                  │
+  │    │                                      │         │                  │
+  │    │ Wire it into /api/orchestrator/run   │         │                  │
+  │    │ so the stub is replaced with a real  │         │                  │
+  │    │ Claude call for intent parsing.      │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 5  │ Frontend polish                      │ Anmol   │ frontend/src/    │
+  │    │ a) Loading spinners on all API calls │         │   components/    │
+  │    │ b) Error toasts/messages             │         │   Spinner.jsx    │
+  │    │ c) Responsive layout                 │         │                  │
+  │    │ d) Verify two-user session flow      │         │                  │
+  │    │    (login as User A, see data;       │         │                  │
+  │    │     logout, login as User B,         │         │                  │
+  │    │     see different data)              │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 6  │ Set up Black + Prettier              │ Anmol   │ pyproject.toml   │
+  │    │ a) Add Black config to pyproject     │         │ .prettierrc      │
+  │    │ b) Add Prettier config for frontend  │         │                  │
+  │    │ c) Run both, commit formatted code   │         │                  │
+  └────┴──────────────────────────────────────┴─────────┴──────────────────┘
+
+  By end of M2 you must be able to:
+    • Open http://localhost:5173 → Register → Login → Type a message →
+      Get a Claude-powered response (even if just intent parsing)
+    • Run: pytest tests/ → all green
+    • See FAISS index file on disk after embedding a query
+
+
+================================================================================
+7. MILESTONE 3 — IMPLEMENTATION (30%)
+================================================================================
+
+  Deliverables required by spec:
+    1. All 3+ AI techniques integrated
+    2. Full UI functional
+    3. Test suite passing (min 15 tests)
+    4. CI configured and green
+    5. Deployment live
+
+  ┌─────────────────────────────────────────────────────────────────────────┐
+  │ TASK BREAKDOWN                                                         │
+  ├────┬──────────────────────────────────────┬─────────┬──────────────────┤
+  │ #  │ Task                                 │ Owner   │ Files            │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 1  │ LangGraph Orchestrator (Technique 2) │ Akash   │ backend/app/     │
+  │    │                                      │         │   orchestrator/  │
+  │    │ Build the state graph:               │         │   graph.py       │
+  │    │                                      │         │   intent.py      │
+  │    │ START                                │         │   router.py      │
+  │    │   → parse_intent (Claude call)       │         │   conflict.py    │
+  │    │   → route_task (decide agent)        │         │   arbitration.py │
+  │    │   → check_conflicts (FAISS + DB)     │         │                  │
+  │    │   → [if conflict] arbitrate          │         │                  │
+  │    │   → execute_agent (Support or Domain)│         │                  │
+  │    │   → update_memory                    │         │                  │
+  │    │   → END                              │         │                  │
+  │    │                                      │         │                  │
+  │    │ Must have 3+ distinct tools/actions: │         │                  │
+  │    │   Tool 1: create_ticket              │         │                  │
+  │    │   Tool 2: query_faq                  │         │                  │
+  │    │   Tool 3: escalate_to_human          │         │                  │
+  │    │   Tool 4: domain_lookup (pluggable)  │         │                  │
+  │    │                                      │         │                  │
+  │    │ State object (Pydantic):             │         │                  │
+  │    │   class OrchState(TypedDict):        │         │                  │
+  │    │     user_id: int                     │         │                  │
+  │    │     raw_input: str                   │         │                  │
+  │    │     parsed_intent: dict              │         │                  │
+  │    │     assigned_agent: str              │         │                  │
+  │    │     conflicts: list[dict]            │         │                  │
+  │    │     resolution: str | None           │         │                  │
+  │    │     agent_output: str                │         │                  │
+  │    │     task_id: int                     │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 2  │ Support Agent                        │ Arpit   │ backend/app/     │
+  │    │                                      │         │   agents/        │
+  │    │ Functions:                           │         │   support.py     │
+  │    │ a) create_ticket(user_id, summary,   │         │                  │
+  │    │    priority) → saves to SQLite       │         │                  │
+  │    │ b) query_faq(question) → searches    │         │                  │
+  │    │    FAQ knowledge base (can be a      │         │                  │
+  │    │    static JSON or SQLite table)      │         │                  │
+  │    │ c) escalate(ticket_id, reason) →     │         │                  │
+  │    │    marks ticket as escalated         │         │                  │
+  │    │                                      │         │                  │
+  │    │ Each function writes to shared       │         │                  │
+  │    │ memory (task registry + agent status)│         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 3  │ Domain Agent                         │ Girish  │ backend/app/     │
+  │    │                                      │         │   agents/        │
+  │    │ Pluggable agent interface:           │         │   domain.py      │
+  │    │   class BaseAgent(ABC):              │         │   base.py        │
+  │    │     @abstractmethod                  │         │                  │
+  │    │     async def execute(task) -> result│         │                  │
+  │    │                                      │         │                  │
+  │    │ Example domain: IT Asset Management  │         │                  │
+  │    │ a) lookup_asset(asset_id) → returns  │         │                  │
+  │    │    asset details from DB             │         │                  │
+  │    │ b) update_asset_status(id, status)   │         │                  │
+  │    │ c) assign_asset(id, user_id)         │         │                  │
+  │    │                                      │         │                  │
+  │    │ OR any other domain — the point is   │         │                  │
+  │    │ it's a separate agent that can       │         │                  │
+  │    │ conflict with the Support Agent.     │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 4  │ Conflict Detection (Technique 3)     │ Girish  │ backend/app/     │
+  │    │                                      │         │   orchestrator/  │
+  │    │ Three conflict types:               │         │   conflict.py    │
+  │    │                                      │         │                  │
+  │    │ TYPE 1: DUPLICATE INTENT             │         │                  │
+  │    │   How: Embed new intent → FAISS      │         │                  │
+  │    │   search → if similarity > 0.85 to   │         │                  │
+  │    │   an existing pending task → flag    │         │                  │
+  │    │   Action: Skip or merge              │         │                  │
+  │    │                                      │         │                  │
+  │    │ TYPE 2: RESOURCE CLASH               │         │                  │
+  │    │   How: Two agents writing to same    │         │                  │
+  │    │   resource (e.g., same ticket_id)    │         │                  │
+  │    │   Check task_registry for resource   │         │                  │
+  │    │   locks before executing             │         │                  │
+  │    │   Action: Arbitrate (rule or LLM)    │         │                  │
+  │    │                                      │         │                  │
+  │    │ TYPE 3: SEQUENTIAL DEPENDENCY        │         │                  │
+  │    │   How: Intent parser detects "then", │         │                  │
+  │    │   "after", "once X is done" → marks  │         │                  │
+  │    │   dependency in task graph           │         │                  │
+  │    │   Action: Queue dependent task       │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 5  │ Shared Memory (Technique 4)          │ Arpit   │ backend/app/     │
+  │    │                                      │         │   memory/        │
+  │    │ Components:                          │         │   shared.py      │
+  │    │ a) Task Registry — SQLite table      │         │                  │
+  │    │    tracking all tasks, their status,  │         │                  │
+  │    │    assigned agent, result            │         │                  │
+  │    │ b) Agent Status — who's busy, who's  │         │                  │
+  │    │    idle, last action                 │         │                  │
+  │    │ c) Conflict Log — every conflict     │         │                  │
+  │    │    detected, type, resolution, time  │         │                  │
+  │    │ d) Intent Store — FAISS index of all │         │                  │
+  │    │    intents for dedup                 │         │                  │
+  │    │ e) Conversation context — rolling    │         │                  │
+  │    │    window of last N interactions per │         │                  │
+  │    │    user, summarized if exceeding     │         │                  │
+  │    │    context window                    │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 6  │ Full Frontend                        │ Anmol   │ frontend/src/    │
+  │    │                                      │         │   pages/         │
+  │    │ Pages:                              │         │   TaskHistory.jsx │
+  │    │ a) Login (done)                      │         │   components/    │
+  │    │ b) Register (done)                   │         │   ConflictCard   │
+  │    │ c) Dashboard — send message, see     │         │   .jsx           │
+  │    │    orchestrator response with task   │         │   TaskCard.jsx   │
+  │    │    breakdown and agent assignments   │         │                  │
+  │    │ d) Task History — table of all past  │         │                  │
+  │    │    tasks with status, agent, result  │         │                  │
+  │    │ e) Conflict view — show conflicts    │         │                  │
+  │    │    with "approve/override" buttons   │         │                  │
+  │    │                                      │         │                  │
+  │    │ 3+ User Actions (spec §3.6):        │         │                  │
+  │    │   1. Submit request (text input)     │         │                  │
+  │    │   2. View task/conflict history      │         │                  │
+  │    │   3. Override/approve arbitration    │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 7  │ Test suite — reach 15+ tests         │ All     │ tests/           │
+  │    │                                      │         │                  │
+  │    │ Already have: 15 (9 API + 6 DB)     │         │                  │
+  │    │ Add:                                │         │                  │
+  │    │ • test_llm.py (mock Claude calls)    │         │                  │
+  │    │ • test_orchestrator.py (graph flow)  │         │                  │
+  │    │ • test_faiss.py (embed + search)     │         │                  │
+  │    │ • test_conflict.py (3 conflict types)│         │                  │
+  │    │ Target: 25+ tests                    │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 8  │ Deploy to GCP Cloud Run              │ Akash   │ Dockerfile       │
+  │    │ (or verified Docker Compose demo)    │ + Anmol │ docker-compose   │
+  │    │                                      │         │                  │
+  │    │ Option A: GCP Cloud Run              │         │                  │
+  │    │   Build Docker images → push to      │         │                  │
+  │    │   Artifact Registry → deploy to      │         │                  │
+  │    │   Cloud Run → public URL             │         │                  │
+  │    │                                      │         │                  │
+  │    │ Option B: Docker fallback            │         │                  │
+  │    │   docker compose up --build          │         │                  │
+  │    │   works on clean machine             │         │                  │
+  └────┴──────────────────────────────────────┴─────────┴──────────────────┘
+
+
+================================================================================
+8. MILESTONE 4 — FINAL SUBMISSION (30%)
+================================================================================
+
+  Deliverables required by spec:
+    1. Final presentation (10-15 slides, PDF on Canvas)
+    2. Demo video (10-15 min, YouTube, all members participate)
+    3. Evaluation results computed
+    4. Code cleaned and documented
+
+  ┌────┬──────────────────────────────────────┬─────────┬──────────────────┐
+  │ #  │ Task                                 │ Owner   │ Output           │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 1  │ Evaluation scripts                   │ Anmol   │ eval/run_eval.py │
+  │    │                                      │ + Girish│ eval/results.json│
+  │    │ Compute:                             │         │                  │
+  │    │ • Duplicate detection precision/recall│        │                  │
+  │    │ • Task completion rate               │         │                  │
+  │    │ • Tool selection accuracy            │         │                  │
+  │    │ • Response latency p50/p95           │         │                  │
+  │    │ • Error rate                         │         │                  │
+  │    │ • Test coverage %                    │         │                  │
+  │    │ Each with baseline comparison        │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 2  │ Code cleanup                         │ All     │                  │
+  │    │ • Run Black on all Python files      │         │                  │
+  │    │ • Run Prettier on all JS files       │         │                  │
+  │    │ • Remove dead code, TODO comments    │         │                  │
+  │    │ • Verify no secrets in repo          │         │                  │
+  │    │ • requirements.txt is accurate       │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 3  │ Final presentation (Canvas PDF)      │ All     │ docs/final-      │
+  │    │                                      │         │ presentation.pptx│
+  │    │ 10-15 slides:                       │         │                  │
+  │    │ Slide 1: Title + team               │         │                  │
+  │    │ Slide 2: Problem statement           │         │                  │
+  │    │ Slide 3: System architecture         │         │                  │
+  │    │ Slide 4-5: AI techniques (4)         │         │                  │
+  │    │ Slide 6-8: Demo screenshots          │         │                  │
+  │    │ Slide 9-10: Evaluation metrics       │         │                  │
+  │    │ Slide 11: Challenges + solutions     │         │                  │
+  │    │ Slide 12: Lessons learned            │         │                  │
+  ├────┼──────────────────────────────────────┼─────────┼──────────────────┤
+  │ 4  │ Demo video (YouTube, 10-15 min)      │ All     │ YouTube link     │
+  │    │                                      │         │                  │
+  │    │ Structure (per spec §10.1):         │         │                  │
+  │    │ [0:00-3:00] Akash: Use case          │         │                  │
+  │    │   walkthrough — what MACE does,      │         │                  │
+  │    │   who it's for, primary workflow     │         │                  │
+  │    │ [3:00-6:00] Arpit: System            │         │                  │
+  │    │   architecture — frontend, backend,  │         │                  │
+  │    │   data layer, AI pipeline            │         │                  │
+  │    │ [6:00-9:00] Girish: Code             │         │                  │
+  │    │   walkthrough — AI integration,      │         │                  │
+  │    │   design patterns, key decisions     │         │                  │
+  │    │ [9:00-12:00] Anmol: Live demo —     │         │                  │
+  │    │   all 3 scenarios end-to-end         │         │                  │
+  │    │ [12:00-15:00] Q&A buffer / wrap-up  │         │                  │
+  └────┴──────────────────────────────────────┴─────────┴──────────────────┘
+
+
+================================================================================
+9. AI TECHNIQUES — DEEP BREAKDOWN
+================================================================================
+
+  We implement 4 techniques. The spec says 3+, but 4 gives us depth.
+
+  ─────────────────────────────────────────────────────────────────────────
+  TECHNIQUE 1: LLM API INTEGRATION (Anthropic Claude)
+  ─────────────────────────────────────────────────────────────────────────
+  File: backend/app/services/llm.py
+
+  What it does:
+    Calls Claude to parse user intent, generate arbitration decisions,
+    and produce structured JSON outputs.
+
+  Spec requirements (§4.1):
+    ✓ API key management       → loads from .env via Settings
+    ✓ Error handling + retries → 3 retries with exponential backoff
+    ✓ Token/cost tracking      → log input_tokens, output_tokens per call
+    ✓ Swappable wrapper → abstract LLMService class; swap Claude for
+                                  OpenAI or local model by changing one class
+
+  Code structure:
+    class LLMResponse(BaseModel):
+        content: str
+        parsed: dict | None
+        input_tokens: int
+        output_tokens: int
+        model: str
+        latency_ms: float
+
+    class LLMService(ABC):
+        async def complete(prompt, system_prompt, output_schema) -> LLMResponse
+
+    class AnthropicService(LLMService):
+        # Concrete implementation using anthropic SDK
+        # Retry logic, token counting, structured output parsing
+
+  How we evaluate it:
+    • Token cost per request (track across 50 test inputs)
+    • Error rate (% of failed API calls after retries)
+    • Latency p50/p95
+
+  ─────────────────────────────────────────────────────────────────────────
+  TECHNIQUE 2: AI AGENTS / MULTI-STEP WORKFLOWS (LangGraph)
+  ─────────────────────────────────────────────────────────────────────────
+  File: backend/app/orchestrator/graph.py
+
+  What it does:
+    The Orchestrator is a LangGraph state graph that decomposes user input
+    into subtasks, routes to agents, handles conflicts, and produces a
+    final coordinated response. It's NOT a single LLM call — it's a
+    multi-node graph with conditional edges.
+
+  Graph nodes:
+    1. parse_intent     → Claude extracts intent type, entities, priority
+    2. check_duplicate  → FAISS search for similar pending intents
+    3. route_task       → Decide: Support Agent or Domain Agent (or both)
+    4. detect_conflict  → Check resource locks + dependencies
+    5. arbitrate        → If conflict, resolve via rules or Claude
+    6. execute_agent    → Call the actual agent function
+    7. update_memory    → Write results to shared memory
+
+  Conditional edges:
+    • check_duplicate: if duplicate found → skip to END (dedup)
+    • detect_conflict: if no conflict → skip arbitrate → execute_agent
+    • route_task: if both agents needed → parallel branch (or sequential)
+
+  Tools (spec requires 3+):
+    Tool 1: create_ticket(summary, priority)
+    Tool 2: query_faq(question)
+    Tool 3: escalate_to_human(ticket_id, reason)
+    Tool 4: domain_lookup(entity_id)
+
+  How we evaluate it:
+    • Task completion rate on 30 curated scenarios
+    • Average steps to completion
+    • Tool selection accuracy (correct agent + tool chosen)
+
+  ─────────────────────────────────────────────────────────────────────────
+  TECHNIQUE 3: VECTOR SEARCH / EMBEDDINGS (FAISS)
+  ─────────────────────────────────────────────────────────────────────────
+  Files: backend/app/memory/embeddings.py, faiss_store.py
+
+  What it does:
+    Embeds every user intent into a vector, stores in FAISS index,
+    and searches for similar intents to detect duplicates.
+
+  Pipeline:
+    1. User submits "reset my password"
+    2. sentence-transformers (all-MiniLM-L6-v2) → 384-dim vector
+    3. Search FAISS index for vectors with cosine similarity > 0.85
+    4. If match found → flag as duplicate intent
+    5. Add new vector to index
+    6. Persist index to disk (FAISS_INDEX_PATH)
+
+  NOT a single API call — it's a full pipeline:
+    • Custom embedding logic (not just calling an API)
+    • Index management (add, search, persist, rebuild)
+    • Threshold tuning (SIMILARITY_THRESHOLD in .env)
+    • Integration with conflict detection
+
+  How we evaluate it:
+    • Precision@5 for duplicate detection
+    • Recall@5 for duplicate detection
+    • Baseline: exact string match vs. FAISS semantic match
+
+  ─────────────────────────────────────────────────────────────────────────
+  TECHNIQUE 4: MEMORY / CONVERSATION MANAGEMENT
+  ─────────────────────────────────────────────────────────────────────────
+  File: backend/app/memory/shared.py
+
+  What it does:
+    Maintains persistent shared state across all agents and orchestration
+    cycles. Agents read and write to shared memory so they're aware of
+    each other's actions.
+
+  Components:
+    a) Task Registry (SQLite)
+       - All tasks: id, user_id, intent, status, assigned_agent, result
+       - Agents check this before acting to avoid conflicts
+
+    b) Agent Status (in-memory + SQLite)
+       - Which agent is busy, idle, last action timestamp
+       - Used by router for load balancing
+
+    c) Conflict Log (SQLite)
+       - Every conflict: type, involved tasks, resolution, timestamp
+       - Shown in the UI for transparency
+
+    d) Intent Store (FAISS)
+       - All embedded intents for deduplication
+
+    e) Conversation Context (SQLite)
+       - Per-user rolling window of last N interactions
+       - If window exceeds token limit → summarize via Claude
+       - User preferences learned over time
+
+  How we evaluate it:
+    • Context retention accuracy: ask follow-up questions, check if
+      system remembers prior context
+    • Memory retrieval relevance: score on 20 curated multi-turn
+      conversations
+
+
+================================================================================
+10. THREE DEMO SCENARIOS — EXACTLY HOW THEY WORK
+================================================================================
+
+  These are the 3 scenarios we show in the demo video to prove coordination.
+
+  ─── SCENARIO 1: DUPLICATE INTENT ───────────────────────────────────────
+
+  Setup:
+    User A sends: "I forgot my password, please help"
+    30 seconds later, User A sends: "Can you reset my password?"
+
+  What happens:
+    1. First message → parse_intent → "password_reset" intent
+    2. Embed intent → add to FAISS index → route to Support Agent
+    3. Support Agent creates ticket #101 → saved to shared memory
+    4. Second message → parse_intent → "password_reset" intent
+    5. Embed intent → FAISS search → similarity 0.93 with ticket #101
+    6. Conflict Detector flags: DUPLICATE_INTENT
+    7. Resolution: Merge — return existing ticket #101 to user
+    8. UI shows: "This looks similar to your existing request (Ticket #101).
+       We're already working on it."
+
+  What this proves:
+    FAISS-based semantic deduplication prevents wasted work.
+
+  ─── SCENARIO 2: CONFLICTING UPDATE ─────────────────────────────────────
+
+  Setup:
+    User sends: "Update my laptop's status to 'returned' and also
+    create a support ticket about the laptop screen issue"
+
+  What happens:
+    1. parse_intent → TWO subtasks:
+       a) Domain Agent: update_asset_status(laptop_123, "returned")
+       b) Support Agent: create_ticket("laptop screen issue", high)
+    2. route_task → both agents assigned
+    3. detect_conflict → RESOURCE_CLASH:
+       Domain Agent wants to mark laptop as "returned"
+       Support Agent wants to create active ticket for same laptop
+       (returned laptop shouldn't have active issues)
+    4. Arbitration Engine → Claude decides:
+       "The laptop should remain 'active' until the screen issue is
+        resolved. Create the support ticket first, then update status
+        after resolution."
+    5. Resolution: Reorder tasks — ticket first, status update deferred
+    6. UI shows conflict card with both options + AI recommendation
+
+  What this proves:
+    The system detects when agents would create an inconsistent state
+    and uses LLM arbitration to resolve it.
+
+  ─── SCENARIO 3: SEQUENTIAL DEPENDENCY ──────────────────────────────────
+
+  Setup:
+    User sends: "Diagnose why my VPN isn't connecting, and once you
+    figure it out, create a ticket with the diagnosis"
+
+  What happens:
+    1. parse_intent → detects sequential dependency ("once you figure it out")
+    2. Two subtasks with dependency:
+       Task A: Domain Agent → diagnose_vpn(user_id) [MUST complete first]
+       Task B: Support Agent → create_ticket(diagnosis) [DEPENDS on A]
+    3. detect_conflict → SEQUENTIAL_DEPENDENCY (B depends on A's output)
+    4. Orchestrator queues Task B, executes Task A first
+    5. Domain Agent returns: "VPN certificate expired on 2026-04-01"
+    6. Orchestrator feeds diagnosis into Task B
+    7. Support Agent creates ticket: "VPN connectivity failure —
+       certificate expired on 2026-04-01. Renewal required."
+    8. UI shows the chain: Task A → output → Task B → final result
+
+  What this proves:
+    The orchestrator can chain agent outputs where one feeds into the next.
+
+
+================================================================================
+11. API CONTRACT (ALL ENDPOINTS)
+================================================================================
+
+  Method  Path                        Auth?   Request Body              Response
+  ──────  ──────────────────────────  ──────  ────────────────────────  ─────────────────
+  GET     /health                     No      —                        { status, service }
+  POST    /api/auth/register          No      { username, email, pw }  { id, username, email }
+  POST    /api/auth/login             No      form: username + pw      { access_token, token_type }
+  GET     /api/auth/me                Yes     —                        { id, username, email }
+  POST    /api/orchestrator/run       Yes     { message }              { reply, tasks[], conflicts[] }
+  GET     /api/tasks                  Yes     —                        [ { id, intent, status, agent, result } ]
+  GET     /api/tasks/{id}             Yes     —                        { id, intent, status, agent, result }
+  GET     /api/conflicts              Yes     —                        [ { id, type, task_a, task_b, resolution } ]
+  POST    /api/conflicts/{id}/resolve Yes     { decision }             { id, resolution, resolved_at }
+
+  Endpoints marked TODO will be implemented in M2/M3:
+    /api/tasks, /api/tasks/{id}, /api/conflicts, /api/conflicts/{id}/resolve
+
+
+================================================================================
+12. DATABASE SCHEMA
+================================================================================
+
+  SQLite (backend/data/mace.db):
+
+  TABLE users
+    id              INTEGER PRIMARY KEY AUTOINCREMENT
+    username        TEXT UNIQUE NOT NULL
+    email           TEXT UNIQUE NOT NULL
+    password_hash   TEXT NOT NULL
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  TABLE tasks
+    id              INTEGER PRIMARY KEY AUTOINCREMENT
+    user_id         INTEGER NOT NULL → users.id
+    intent          TEXT NOT NULL
+    status          TEXT DEFAULT 'pending'   -- pending | in_progress | completed | failed | duplicate
+    assigned_agent  TEXT                     -- 'support' | 'domain' | 'both'
+    result          TEXT
+    parent_task_id  INTEGER                  -- for sequential dependencies
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  TABLE conflicts
+    id              INTEGER PRIMARY KEY AUTOINCREMENT
+    task_id_a       INTEGER NOT NULL → tasks.id
+    task_id_b       INTEGER NOT NULL → tasks.id
+    conflict_type   TEXT NOT NULL            -- 'duplicate_intent' | 'resource_clash' | 'sequential_dependency'
+    resolution      TEXT                     -- 'merged' | 'reordered' | 'priority_override' | 'user_override'
+    resolved_at     TIMESTAMP
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  TABLE conversations
+    id              INTEGER PRIMARY KEY AUTOINCREMENT
+    user_id         INTEGER NOT NULL → users.id
+    role            TEXT NOT NULL            -- 'user' | 'assistant'
+    content         TEXT NOT NULL
+    created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP
+
+  FAISS Index (backend/data/faiss_index/):
+    intent_index.faiss   — 384-dimensional vectors
+    intent_map.json      — maps FAISS vector ID → task ID
+
+
+================================================================================
+13. FRONTEND PAGES & USER ACTIONS
+================================================================================
+
+  Page            Route          Description
+  ──────────────  ─────────────  ──────────────────────────────────────────
+  Login           /login         Username + password form → JWT token
+  Register        /register      Username + email + password → create account
+  Dashboard       /dashboard     Main interaction page:
+                                   • Text input for natural-language requests
+                                   • Shows orchestrator response with task
+                                     breakdown, agent assignments, results
+                                   • Real-time conflict alerts
+  Task History    /tasks         Table of all past tasks with:
+                                   • Intent, status, assigned agent, result
+                                   • Filter by status, agent
+                                   • Click to expand details
+  Conflict View   /conflicts     List of all detected conflicts with:
+                                   • Conflict type, involved tasks
+                                   • AI recommendation
+                                   • "Approve" / "Override" buttons (user action #3)
+
+  3 Distinct User Actions (spec §3.6):
+    1. SUBMIT REQUEST     — type message in Dashboard, hit Send
+    2. VIEW HISTORY       — browse Task History and Conflict View pages
+    3. OVERRIDE DECISION  — approve or reject AI arbitration on conflicts
+
+
+================================================================================
+14. TEST PLAN (15+ TESTS)
+================================================================================
+
+  File                         # Tests  What They Cover
+  ───────────────────────────  ───────  ──────────────────────────────────
+  tests/backend/test_api.py        9   Health, register, login, auth, orchestrator
+  tests/backend/test_database.py   7   CRUD: users, tasks, queries
+  tests/backend/test_llm.py        3   Mock Claude calls, retry logic, token tracking
+  tests/backend/test_faiss.py      3   Embed, search, persist, duplicate detection
+  tests/backend/test_orchestrator  4   Graph flow, routing, conflict detection
+  tests/backend/test_conflict.py   3   3 conflict types: duplicate, clash, dependency
+  tests/frontend/ (vitest)         3   Component render tests (Login, Dashboard)
+  ─────────────────────────────────────
+  TOTAL                           32   (spec minimum: 15)
+
+  Run commands:
+    pytest tests/backend/ -v          ← backend
+    cd frontend && npm test           ← frontend
+
+  CI: .github/workflows/ci.yml runs both on every push to main and on PRs.
+
+
+================================================================================
+15. EVALUATION PLAN (METRICS + BASELINES)
+================================================================================
+
+  ── AI Metrics (spec §5.2 — need at least 2) ──
+
+  Metric 1: Duplicate Intent Detection
+    Metric:    Precision@5 and Recall@5
+    Dataset:   50 pairs of intents (25 true duplicates, 25 non-duplicates)
+    Baseline:  Exact string match
+    Expected:  FAISS (P@5 > 0.85) vs. string match (P@5 ~ 0.40)
+
+  Metric 2: Task Completion Rate
+    Metric:    % of scenarios where orchestrator produces correct final output
+    Dataset:   30 curated user scenarios (10 per demo type)
+    Baseline:  Direct single-agent call (no orchestration)
+    Expected:  Orchestrated (>80%) vs. direct (>50%)
+
+  Metric 3: Tool Selection Accuracy
+    Metric:    % of scenarios where correct agent + tool is chosen
+    Dataset:   Same 30 scenarios
+    Baseline:  Random agent assignment
+    Expected:  LangGraph routing (>85%) vs. random (~33%)
+
+  ── System Metrics (spec §5.3) ──
+
+  Metric:           How Measured:
+  Latency p50       Time from request to response, median over 50 runs
+  Latency p95       95th percentile of same
+  Error rate        % of requests returning 5xx over 100 runs
+  Test coverage     pytest --cov, report as % of backend code covered
+
+  All results written to: eval/results.json
+  Script: eval/run_eval.py
+
+
+================================================================================
+16. DEPLOYMENT PLAN
+================================================================================
+
+  PRIMARY: Docker Compose (guaranteed to work)
+    docker compose up --build
+    Frontend: http://localhost:3000
+    Backend:  http://localhost:8000
+
+  OPTIONAL: GCP Cloud Run
+    1. Build images: docker build -t mace-backend ./backend
+                     docker build -t mace-frontend ./frontend
+    2. Push to Artifact Registry: gcloud builds submit
+    3. Deploy: gcloud run deploy mace-backend --image=...
+               gcloud run deploy mace-frontend --image=...
+    4. Public URLs in README
+
+  Spec says (§3.5):
+    "A localhost-only demo during the final presentation is acceptable
+     only if a Dockerfile / docker-compose.yml is provided"
+  We have docker-compose.yml ✅, so Docker fallback is always valid.
+
+
+================================================================================
+17. GIT WORKFLOW & BRANCH STRATEGY
+================================================================================
+
+  Branch naming:
+    main                       ← production, protected
+    feature/auth-flow          ← feature branches
+    feature/langgraph-orch
+    feature/faiss-pipeline
+    feature/frontend-dashboard
+    fix/token-retry-bug        ← bug fixes
+
+  Rules:
+    • NEVER commit directly to main
+    • Create a branch → work → open PR → at least 1 review → merge
+    • Commit messages: "feat: add FAISS embedding pipeline"
+                       "fix: handle expired JWT gracefully"
+                       "test: add conflict detection tests"
+    • Commit OFTEN. Spec warns: "If we observe all commits concentrated
+      on a single day... grade deductions will apply."
+    • Every team member must have meaningful commits.
+
+
+================================================================================
+18. RISK REGISTER
+================================================================================
+
+  Risk                           Impact   Probability  Mitigation
+  ─────────────────────────────  ───────  ───────────  ─────────────────────────
+  Claude API rate limits/cost    High     Medium       Token tracking, caching
+                                                       repeated intents, use
+                                                       haiku for non-critical calls
+  FAISS index corruption         Medium   Low          Persist to disk, rebuild
+                                                       script, backup in eval/
+  Team member drops out          High     Low          Cross-train; each person
+                                                       can cover adjacent module
+  GCP deploy fails               Medium   Medium       Docker Compose fallback
+                                                       (spec allows it)
+  LangGraph version breaking     Medium   Low          Pin version in requirements
+  React build fails in Docker    Medium   Medium       Test Docker build weekly
+  Test flakiness                 Low      Medium       Use deterministic seeds,
+                                                       mock external API calls
+
+
+================================================================================
+19. WEEK-BY-WEEK EXECUTION TIMELINE
+================================================================================
+
+  MILESTONE 2 PERIOD
+  ┌──────────┬────────────────────────────────────────────────────────────────┐
+  │ Week 1   │ Akash: Architecture diagram (Mermaid/image in docs/)          │
+  │          │ Arpit: Verify auth end-to-end (2 users in React)              │
+  │          │ Girish: FAISS embedding pipeline (embed → store → search)     │
+  │          │ Anmol: Frontend loading states, error handling, responsive    │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 2   │ Akash: Claude API wrapper (llm.py) with retries + tokens     │
+  │          │ Arpit: Wire Claude into /api/orchestrator/run for intent parse│
+  │          │ Girish: Persist FAISS to disk, unit tests for similarity      │
+  │          │ Anmol: Set up Black + Prettier, format entire codebase        │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 3   │ ALL: Integration test — register, login, send message,        │
+  │          │      get Claude-parsed intent back in UI.                     │
+  │          │      Fix bugs. Submit M2.                                     │
+  └──────────┴────────────────────────────────────────────────────────────────┘
+
+  MILESTONE 3 PERIOD
+  ┌──────────┬────────────────────────────────────────────────────────────────┐
+  │ Week 4   │ Akash: LangGraph state graph (7 nodes, conditional edges)     │
+  │          │ Arpit: Support Agent (create_ticket, query_faq, escalate)     │
+  │          │ Girish: Domain Agent (pluggable interface, asset management)  │
+  │          │ Anmol: Task History page with API integration                 │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 5   │ Akash: Conflict detection logic (3 types in conflict.py)      │
+  │          │ Arpit: Shared memory layer (task registry, agent status, log) │
+  │          │ Girish: Duplicate intent detection via FAISS in orchestrator  │
+  │          │ Anmol: Conflict View page with approve/override buttons       │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 6   │ Akash: Arbitration engine (rule-based + Claude fallback)      │
+  │          │ Arpit: Conversation context (rolling window + summarization)  │
+  │          │ Girish: Sequential dependency chaining                        │
+  │          │ Anmol: Dashboard full integration (show task breakdown)       │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 7   │ ALL: Write tests (target 25+). Fix bugs. CI green.            │
+  │          │ Akash + Anmol: Deploy (GCP or Docker verified).              │
+  │          │ Submit M3.                                                    │
+  └──────────┴────────────────────────────────────────────────────────────────┘
+
+  MILESTONE 4 PERIOD
+  ┌──────────┬────────────────────────────────────────────────────────────────┐
+  │ Week 8   │ Anmol + Girish: Write eval/run_eval.py                        │
+  │          │   Run all 50 test scenarios, compute metrics.                 │
+  │          │ Akash + Arpit: Code cleanup (Black, Prettier, dead code)     │
+  ├──────────┼────────────────────────────────────────────────────────────────┤
+  │ Week 9   │ ALL: Final presentation slides (10-15 slides)                 │
+  │          │ ALL: Record demo video (10-15 min, all 4 members)            │
+  │          │ ALL: Final README update (deployment URL, test/eval commands) │
+  │          │ Submit M4.                                                    │
+  └──────────┴────────────────────────────────────────────────────────────────┘
+
+
+================================================================================
+END OF PLAN
+================================================================================
