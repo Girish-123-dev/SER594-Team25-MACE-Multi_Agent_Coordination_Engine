@@ -6,9 +6,10 @@ load_dotenv()
 
 
 class Settings(BaseSettings):
-    # LLM
-    anthropic_api_key: str = os.getenv("ANTHROPIC_API_KEY", "")
-    model_name: str = os.getenv("MODEL_NAME", "claude-sonnet-4-20250514")
+    # LLM (Gemini Developer API — get a key at https://aistudio.google.com/apikey)
+    gemini_api_key: str = os.getenv("GEMINI_API_KEY", "")
+    google_api_key: str = os.getenv("GOOGLE_API_KEY", "")
+    model_name: str = os.getenv("MODEL_NAME", "gemini-2.5-flash-lite")
 
     # Storage
     db_path: str = os.getenv("DB_PATH", "data/mace.db")

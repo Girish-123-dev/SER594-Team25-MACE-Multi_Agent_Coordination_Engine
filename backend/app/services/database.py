@@ -76,6 +76,24 @@ class Database:
         self.conn.commit()
         return cur.lastrowid
 
+    def update_task(self, task_id: int, status: str | None = None, result: str | None = None) -> None:
+        parts: list[str] = []
+        params: list = []
+        if status is not None:
+            parts.append("status = ?")
+            params.append(status)
+        if result is not None:
+            parts.append("result = ?")
+            params.append(result)
+        if not parts:
+            return
+        params.append(task_id)
+        self.conn.execute(
+            f"UPDATE tasks SET {', '.join(parts)} WHERE id = ?",
+            params,
+        )
+        self.conn.commit()
+
     def get_tasks_by_user(self, user_id: int):
         return self.conn.execute(
             "SELECT * FROM tasks WHERE user_id = ? ORDER BY created_at DESC", (user_id,)

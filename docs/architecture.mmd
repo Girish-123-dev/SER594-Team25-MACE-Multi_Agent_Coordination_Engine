@@ -15,13 +15,13 @@ graph TB
 
         subgraph Orchestrator["Orchestrator Pipeline"]
             OrcRouter["/api/orchestrator/run"]
-            IntentParser["Intent Parser<br/>(Claude LLM)"]
+            IntentParser["Intent Parser<br/>(Gemini LLM)"]
             TaskRouter["Task Router"]
             ConflictDetector["Conflict Detector<br/>(FAISS duplicate check)"]
         end
 
         subgraph Services["Services"]
-            LLMService["LLM Service<br/>(Anthropic Claude)<br/>• Retries (3x)<br/>• Token tracking<br/>• Provider-agnostic"]
+            LLMService["LLM Service<br/>(Google Gemini)<br/>• Retries (3x)<br/>• Token tracking<br/>• Provider-agnostic"]
         end
     end
 
@@ -32,7 +32,7 @@ graph TB
     end
 
     subgraph External["External APIs"]
-        Claude["Anthropic Claude API"]
+        GeminiAPI["Google Gemini API"]
     end
 
     %% Frontend connections
@@ -52,7 +52,7 @@ graph TB
     ConflictDetector -->|"Embed & search"| FAISS
     ConflictDetector -->|"No duplicate"| IntentParser
     IntentParser --> LLMService
-    LLMService --> Claude
+    LLMService --> GeminiAPI
     IntentParser --> TaskRouter
     TaskRouter --> SQLite
 
@@ -68,4 +68,4 @@ graph TB
     class Login,Register,Dashboard,TaskHistory,APIClient frontend
     class AuthRouter,JWT,OrcRouter,IntentParser,TaskRouter,ConflictDetector,LLMService backend
     class SQLite,FAISS,SentenceTransformers data
-    class Claude external
+    class GeminiAPI external

@@ -1,13 +1,15 @@
 import sys
+import uuid
 from pathlib import Path
+from unittest.mock import MagicMock, patch
 
-import pytest
 from fastapi.testclient import TestClient
 
 # Add backend to path so `app` package is importable
 sys.path.insert(0, str(Path(__file__).resolve().parents[2] / "backend"))
 
 from app.main import app  # noqa: E402
+from app.services.llm import LLMResponse  # noqa: E402
 
 client = TestClient(app)
 
@@ -19,14 +21,15 @@ def test_health_endpoint():
 
 
 def test_register_user():
+    u = uuid.uuid4().hex[:8]
     resp = client.post("/api/auth/register", json={
-        "username": "testuser1",
-        "email": "test1@example.com",
+        "username": f"testuser1_{u}",
+        "email": f"test1_{u}@example.com",
         "password": "securepassword123",
     })
     assert resp.status_code == 201
     data = resp.json()
-    assert data["username"] == "testuser1"
+    assert data["username"] == f"testuser1_{u}"
 
 
 def test_register_duplicate_username():
@@ -96,7 +99,25 @@ def test_orchestrator_requires_auth():
     assert resp.status_code == 401
 
 
-def test_orchestrator_with_auth():
+@patch("app.orchestrator.intent.get_llm_service")
+def test_orchestrator_with_auth(mock_get_llm):
+    mock_llm = MagicMock()
+    mock_get_llm.return_value = mock_llm
+    mock_llm.complete.return_value = LLMResponse(
+        content="{}",
+        parsed={
+            "intent_type": "support_ticket",
+            "summary": "Create a support ticket",
+            "entities": [],
+            "priority": "medium",
+            "requires_agents": ["support"],
+            "has_dependency": False,
+        },
+        input_tokens=10,
+        output_tokens=20,
+        model="gemini-2.5-flash-lite",
+        latency_ms=50.0,
+    )
     client.post("/api/auth/register", json={
         "username": "orchuser",
         "email": "orch@example.com",
