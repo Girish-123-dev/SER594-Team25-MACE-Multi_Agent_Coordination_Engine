@@ -1,16 +1,19 @@
 import { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import api from "../services/api";
+import Spinner from "../components/Spinner";
 
 function Login() {
   const [username, setUsername] = useState("");
   const [password, setPassword] = useState("");
   const [error, setError] = useState("");
+  const [loading, setLoading] = useState(false);
   const navigate = useNavigate();
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError("");
+    setLoading(true);
     try {
       const params = new URLSearchParams();
       params.append("username", username);
@@ -20,6 +23,8 @@ function Login() {
       navigate("/dashboard");
     } catch (err) {
       setError(err.response?.data?.detail || "Login failed");
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -34,9 +39,22 @@ function Login() {
         </div>
         <div className="form-group">
           <label>Password</label>
-          <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} required />
+          <input
+            type="password"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            required
+          />
         </div>
-        <button type="submit">Log in</button>
+        <button type="submit" disabled={loading}>
+          {loading ? (
+            <>
+              <Spinner size={16} /> Logging in…
+            </>
+          ) : (
+            "Log in"
+          )}
+        </button>
       </form>
       <p style={{ marginTop: "1rem" }}>
         No account? <Link to="/register">Register</Link>

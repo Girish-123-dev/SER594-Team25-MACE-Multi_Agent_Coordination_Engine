@@ -13,7 +13,7 @@ router = APIRouter()
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl="/api/auth/login")
 
 
-# ---------- Schemas ----------
+
 
 class RegisterRequest(BaseModel):
     username: str
@@ -32,7 +32,7 @@ class UserResponse(BaseModel):
     email: str
 
 
-# ---------- Helpers ----------
+
 
 def hash_password(password: str) -> str:
     return bcrypt.hashpw(password.encode(), bcrypt.gensalt()).decode()
@@ -63,7 +63,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme), db: Database = D
     return user
 
 
-# ---------- Routes ----------
+
 
 @router.post("/register", response_model=UserResponse, status_code=status.HTTP_201_CREATED)
 async def register(body: RegisterRequest, db: Database = Depends(get_db)):

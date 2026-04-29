@@ -47,7 +47,6 @@ class Database:
         """)
         self.conn.commit()
 
-    # ---- User operations ----
 
     def create_user(self, username: str, email: str, password_hash: str) -> int:
         cur = self.conn.execute(
@@ -66,7 +65,6 @@ class Database:
     def get_user_by_id(self, user_id: int):
         return self.conn.execute("SELECT * FROM users WHERE id = ?", (user_id,)).fetchone()
 
-    # ---- Task operations ----
 
     def create_task(self, user_id: int, intent: str, assigned_agent: str | None = None) -> int:
         cur = self.conn.execute(
@@ -75,6 +73,24 @@ class Database:
         )
         self.conn.commit()
         return cur.lastrowid
+
+    def update_task(self, task_id: int, status: str | None = None, result: str | None = None):
+        updates = []
+        params = []
+        if status is not None:
+            updates.append("status = ?")
+            params.append(status)
+        if result is not None:
+            updates.append("result = ?")
+            params.append(result)
+        if not updates:
+            return
+        params.append(task_id)
+        self.conn.execute(f"UPDATE tasks SET {', '.join(updates)} WHERE id = ?", params)
+        self.conn.commit()
+
+    def get_task_by_id(self, task_id: int):
+        return self.conn.execute("SELECT * FROM tasks WHERE id = ?", (task_id,)).fetchone()
 
     def get_tasks_by_user(self, user_id: int):
         return self.conn.execute(
@@ -85,7 +101,6 @@ class Database:
         self.conn.close()
 
 
-# ---- FastAPI dependency ----
 
 _db: Database | None = None
 
