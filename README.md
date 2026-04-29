@@ -56,7 +56,7 @@ MACE is a multi-agent orchestration system that coordinates specialized AI agent
 |-------|-----------|
 | Frontend | React 18, Vite, React Router, Axios |
 | Backend | Python 3.11+, FastAPI, Uvicorn |
-| AI / ML | Anthropic Claude API, FAISS (faiss-cpu), Sentence-Transformers |
+| AI / ML | Google Gemini API (e.g. Flash-Lite), FAISS (faiss-cpu), Sentence-Transformers |
 | Database | SQLite (relational) + FAISS index (vector) |
 | Auth | JWT (PyJWT + bcrypt) |
 | Deployment | Docker & Docker Compose |
@@ -116,7 +116,7 @@ cd SER594-Team25-MACE-Multi_Agent_Coordination_Engine
 
 ```bash
 cp .env.example .env
-# Edit .env and set your ANTHROPIC_API_KEY
+# Edit .env and set your GEMINI_API_KEY (from Google AI Studio)
 ```
 
 ### 3. Backend
@@ -148,8 +148,9 @@ docker compose up --build
 
 | Variable | Description | Default |
 |----------|-------------|---------|
-| `ANTHROPIC_API_KEY` | Anthropic API key for Claude | *(required)* |
-| `MODEL_NAME` | Claude model identifier | `claude-sonnet-4-20250514` |
+| `GEMINI_API_KEY` | Google AI Studio API key for Gemini | *(required)* |
+| `GOOGLE_API_KEY` | Alternative env name for the same Gemini key | *(optional)* |
+| `MODEL_NAME` | Gemini model id | `gemini-2.5-flash-lite` |
 | `DB_PATH` | SQLite database file | `data/mace.db` |
 | `FAISS_INDEX_PATH` | FAISS index directory | `data/faiss_index` |
 | `SIMILARITY_THRESHOLD` | Duplicate-intent cosine threshold (0–1) | `0.85` |
@@ -200,26 +201,26 @@ curl -X POST http://localhost:8000/api/auth/login \
 curl -H "Authorization: Bearer <token>" http://localhost:8000/api/auth/me
 ```
 
-## AI Technique #1 — LLM API Integration (Anthropic Claude)
+## AI Technique #1 — LLM API Integration (Google Gemini)
 
-The first AI technique is **LLM API Integration** using the Anthropic Claude API for intent parsing.
+The first AI technique is **LLM API Integration** using the Google Gemini API (default: **gemini-2.5-flash-lite**) for intent parsing.
 
 **Capabilities:**
 - Parses natural-language messages into structured JSON (intent type, entities, priority, required agents)
 - Structured output parsing with JSON schema enforcement
 - 3× retry with exponential backoff on rate-limit and server errors
 - Tracks input/output tokens and latency per request
-- Swappable LLM backend (`BaseLLMService` ABC → `AnthropicService`)
+- Swappable LLM backend (`BaseLLMService` ABC → `GeminiService`)
 
 **Usage:**
-1. Set `ANTHROPIC_API_KEY` in `.env`
+1. Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) in `.env`; get a key at [Google AI Studio](https://aistudio.google.com/apikey)
 2. Start backend and frontend (see Setup above)
 3. Register, log in, then type a message on the Dashboard — e.g. *"I forgot my password, please help"*
-4. The pipeline will: check FAISS for duplicate intents → call Claude to parse intent → route to the correct agent → save task to SQLite → store embedding in FAISS → return the result
+4. The pipeline will: check FAISS for duplicate intents → call Gemini to parse intent → route to the correct agent → save task to SQLite → store embedding in FAISS → return the result
 
 **Key files:**
-- `backend/app/services/llm.py` — Claude API wrapper (retries, token tracking)
-- `backend/app/orchestrator/intent.py` — Intent parser (Claude prompt + JSON extraction)
+- `backend/app/services/llm.py` — Gemini API wrapper (retries, token tracking)
+- `backend/app/orchestrator/intent.py` — Intent parser (LLM prompt + JSON extraction)
 - `backend/app/orchestrator/pipeline.py` — Orchestration pipeline
 - `backend/app/orchestrator/router.py` — Task routing logic
 - `backend/app/orchestrator/conflict.py` — FAISS duplicate-intent detection
