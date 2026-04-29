@@ -105,7 +105,16 @@ class GeminiService(BaseLLMService):
                     try:
                         parsed = json.loads(content)
                     except json.JSONDecodeError:
-                        logger.warning("LLM returned non-JSON output, returning raw text")
+                        # Gemini often wraps JSON in ```json ... ``` blocks
+                        import re
+                        m = re.search(r"```(?:json)?\s*\n?(.*?)\n?\s*```", content, re.DOTALL)
+                        if m:
+                            try:
+                                parsed = json.loads(m.group(1))
+                            except json.JSONDecodeError:
+                                logger.warning("LLM returned non-JSON output, returning raw text")
+                        else:
+                            logger.warning("LLM returned non-JSON output, returning raw text")
 
                 result = LLMResponse(
                     content=content,
