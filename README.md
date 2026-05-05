@@ -78,17 +78,17 @@ MACE is a multi-agent orchestration system that coordinates specialized AI agent
 │   │   ├── routers/        # auth, orchestrator, health
 │   │   ├── services/       # database, LLM wrapper
 │   │   ├── orchestrator/   # Intent parser, task router, conflict detector, pipeline
-│   │   ├── memory/         # FAISS store, sentence-transformer embeddings
-│   │   ├── agents/         # (M3: Support Agent, Domain Agent)
+│   │   ├── memory/         # FAISS store, sentence-transformer embeddings, conversation memory
+│   │   ├── agents/         # Support Agent, Domain Agent (multi-step workflows)
 │   │   └── models/         # Pydantic schemas
 │   ├── requirements.txt
 │   └── Dockerfile
 ├── tests/
-│   └── backend/            # 25 pytest tests (API, DB, FAISS, LLM)
+│   └── backend/            # 48 pytest tests (API, DB, FAISS, LLM, Pipeline, Agents, Conversation)
 ├── docs/
 │   ├── architecture.mmd    # Mermaid architecture diagram
 │   └── PROJECT_PLAN.txt    # Full project plan
-├── eval/                   # (M3/M4: evaluation scripts)
+├── eval/                   # Evaluation scripts
 ├── .github/workflows/ci.yml
 ├── docker-compose.yml
 ├── pyproject.toml          # Black config
@@ -167,14 +167,22 @@ docker compose up --build
 python3 -m pytest tests/backend/ -v
 ```
 
-25 tests across 4 files:
+48 tests across 7 files:
 
 | File | Tests | Covers |
 |------|-------|--------|
-| `test_api.py` | 9 | Health, register, login, auth, orchestrator endpoints |
+| `test_api.py` | 12 | Health, register, login, auth, orchestrator endpoints, history |
 | `test_database.py` | 6 | User CRUD, task CRUD |
 | `test_faiss.py` | 6 | Add/search, duplicates, persist/reload, embedding dimensions |
 | `test_llm.py` | 4 | LLM response, JSON parsing, error handling, token tracking |
+| `test_pipeline.py` | 7 | Task routing, full pipeline execution, duplicate detection |
+| `test_agents.py` | 8 | Agent registry, support agent, domain agent, escalation logic |
+| `test_conversation.py` | 5 | Conversation memory, context retrieval, user isolation |
+
+Frontend tests (5 tests):
+```bash
+cd frontend && npm test
+```
 
 CI runs automatically on every push and pull request via GitHub Actions (`.github/workflows/ci.yml`).
 
@@ -184,6 +192,98 @@ CI runs automatically on every push and pull request via GitHub Actions (`.githu
 2. **Login** — Go to `http://localhost:5173/login` and enter your credentials. A JWT token is stored automatically.
 3. **Dashboard** — After login you are redirected to `/dashboard`. All API calls include the token via `Authorization: Bearer <token>`.
 4. **Two-user sessions** — Log out, register a second user, and log in. Each user sees only their own task history.
+
+## AI Technique #1 — LLM API Integration (Google Gemini)
+
+**LLM API Integration** using the Google Gemini API (default: **gemini-2.5-flash-lite**) for intent parsing and agent reasoning.
+
+**Capabilities:**
+- Parses natural-language messages into structured JSON (intent type, entities, priority, required agents)
+- Structured output parsing with JSON schema enforcement
+- 3× retry with exponential backoff on rate-limit and server errors
+- Tracks input/output tokens and latency per request
+- Swappable LLM backend (`BaseLLMService` ABC → `GeminiService`)
+
+**Key files:**
+- `backend/app/services/llm.py` — Gemini API wrapper (retries, token tracking)
+- `backend/app/orchestrator/intent.py` — Intent parser (LLM prompt + JSON extraction)
+
+---
+
+## AI Technique #2 — Vector Search / Embeddings (FAISS + Sentence-Transformers)
+
+**Custom embedding pipeline** using `all-MiniLM-L6-v2` (384-dim) and FAISS for duplicate intent detection and knowledge retrieval.
+
+**Capabilities:**
+- Embeds user messages into dense vectors using sentence-transformers
+- Indexes vectors in a FAISS inner-product index for fast similarity search
+- Detects duplicate intents (configurable cosine threshold, default 0.85)
+- Persists index to disk and reloads on startup
+- Agents use semantic search to retrieve relevant past interactions
+
+**Key files:**
+- `backend/app/memory/embeddings.py` — Sentence-transformer embedding model
+- `backend/app/memory/faiss_store.py` — FAISS vector store (add, search, find_duplicates, persist)
+- `backend/app/orchestrator/conflict.py` — Duplicate detection using FAISS
+
+---
+
+## AI Technique #3 — AI Agents / Multi-Step Workflows
+
+**Two specialized agents** (Support Agent, Domain Agent) that execute multi-step workflows with 4+ tools each.
+
+**Support Agent** (handles support tickets, FAQs, escalations):
+1. `knowledge_lookup` — searches FAISS for similar resolved tickets
+2. `classify_priority` — uses LLM to classify/confirm priority
+3. `generate_response` — generates contextual response using LLM + retrieved context
+4. `escalation_check` — determines if human escalation is needed
+
+**Domain Agent** (handles domain lookups and knowledge synthesis):
+1. `extract_entities` — uses LLM to extract structured entities from query
+2. `semantic_search` — deep search of FAISS knowledge base with entity enrichment
+3. `synthesize_answer` — uses LLM to synthesize information from multiple sources
+4. `validate_response` — self-critique loop to validate answer quality
+5. `refine_response` — (conditional) refines answer if validation fails
+
+**Key files:**
+- `backend/app/agents/base.py` — Abstract base agent class
+- `backend/app/agents/support_agent.py` — Support agent with 4 tools
+- `backend/app/agents/domain_agent.py` — Domain agent with 5 tools
+- `backend/app/agents/__init__.py` — Agent registry and lookup
+
+---
+
+## AI Technique #4 — Memory / Conversation Management
+
+**Persistent conversation history** with automatic summarization when context exceeds threshold.
+
+**Capabilities:**
+- Stores per-user conversation history (user + assistant messages)
+- Summarizes old messages using LLM when history exceeds 20 messages
+- Provides context (summary + recent messages) to agents for continuity
+- User isolation — each user has their own conversation state
+- Persists across sessions via SQLite
+
+**Key files:**
+- `backend/app/memory/conversation.py` — ConversationMemory class with summarization
+- `backend/app/routers/orchestrator.py` — `/history` endpoint for conversation retrieval
+
+---
+
+## How to Use Each Feature
+
+1. **Register** — Go to `http://localhost:5173/register` and create an account.
+2. **Login** — Go to `http://localhost:5173/login` and enter your credentials. A JWT token is stored automatically.
+3. **Submit a Task** — On the Dashboard, type a natural-language request (e.g., *"I forgot my password"* or *"How do I configure VPN access?"*). The system will:
+   - Check for duplicate intents via FAISS
+   - Parse intent using Gemini (structured JSON output)
+   - Route to the appropriate agent (Support or Domain)
+   - Execute the agent's multi-step workflow
+   - Store the interaction in conversation memory
+   - Return the result with agent steps and tool usage
+4. **View Task History** — The Dashboard displays all your past tasks with their status, assigned agent, and result.
+5. **Conversation Memory** — The system remembers prior interactions. Ask follow-up questions and the agents will have context from your previous requests.
+6. **Two-user sessions** — Log out, register a second user, and log in. Each user sees only their own data.
 
 **curl examples:**
 
@@ -199,30 +299,35 @@ curl -X POST http://localhost:8000/api/auth/login \
 
 # Authenticated request
 curl -H "Authorization: Bearer <token>" http://localhost:8000/api/auth/me
+
+# Run orchestrator
+curl -X POST http://localhost:8000/api/orchestrator/run \
+  -H "Content-Type: application/json" \
+  -H "Authorization: Bearer <token>" \
+  -d '{"message":"I need help resetting my password"}'
+
+# Get task history
+curl -H "Authorization: Bearer <token>" http://localhost:8000/api/orchestrator/tasks
+
+# Get conversation history
+curl -H "Authorization: Bearer <token>" http://localhost:8000/api/orchestrator/history
 ```
 
-## AI Technique #1 — LLM API Integration (Google Gemini)
+---
 
-The first AI technique is **LLM API Integration** using the Google Gemini API (default: **gemini-2.5-flash-lite**) for intent parsing.
+## Deployment
 
-**Capabilities:**
-- Parses natural-language messages into structured JSON (intent type, entities, priority, required agents)
-- Structured output parsing with JSON schema enforcement
-- 3× retry with exponential backoff on rate-limit and server errors
-- Tracks input/output tokens and latency per request
-- Swappable LLM backend (`BaseLLMService` ABC → `GeminiService`)
+The system is deployed and reproducible locally via Docker Compose.
 
-**Usage:**
-1. Set `GEMINI_API_KEY` (or `GOOGLE_API_KEY`) in `.env`; get a key at [Google AI Studio](https://aistudio.google.com/apikey)
-2. Start backend and frontend (see Setup above)
-3. Register, log in, then type a message on the Dashboard — e.g. *"I forgot my password, please help"*
-4. The pipeline will: check FAISS for duplicate intents → call Gemini to parse intent → route to the correct agent → save task to SQLite → store embedding in FAISS → return the result
+```bash
+docker compose up --build
+# Frontend → http://localhost:3000
+# Backend API → http://localhost:8000
+# Health check → http://localhost:8000/health
+```
 
-**Key files:**
-- `backend/app/services/llm.py` — Gemini API wrapper (retries, token tracking)
-- `backend/app/orchestrator/intent.py` — Intent parser (LLM prompt + JSON extraction)
-- `backend/app/orchestrator/pipeline.py` — Orchestration pipeline
-- `backend/app/orchestrator/router.py` — Task routing logic
-- `backend/app/orchestrator/conflict.py` — FAISS duplicate-intent detection
-- `backend/app/memory/faiss_store.py` — FAISS vector store
-- `backend/app/memory/embeddings.py` — Sentence-transformer embedding (all-MiniLM-L6-v2, 384-dim)
+The `docker-compose.yml` bundles:
+- **backend** — FastAPI + Uvicorn (Python 3.11)
+- **frontend** — React (Vite build) served via Nginx
+
+Data is persisted via a Docker volume (`mace-data`).

@@ -9,9 +9,6 @@ on:
 jobs:
   backend-tests:
     runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend
     steps:
       - uses: actions/checkout@v4
 
@@ -21,10 +18,10 @@ jobs:
           python-version: "3.11"
 
       - name: Install dependencies
-        run: pip install -r requirements.txt
+        run: pip install -r backend/requirements.txt
 
       - name: Run tests
-        run: pytest ../tests/backend/ -v
+        run: python -m pytest tests/backend/ -v
 
   frontend-tests:
     runs-on: ubuntu-latest
@@ -41,6 +38,9 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+
+      - name: Build frontend
+        run: npm run build
 
       - name: Run tests
         run: npm test
