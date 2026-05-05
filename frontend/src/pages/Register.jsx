@@ -26,40 +26,57 @@ function Register() {
   };
 
   return (
-    <div className="container">
-      <h1>MACE — Register</h1>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div className="logo">
+          <h1>MACE</h1>
+          <p>Create your account</p>
         </div>
-        <div className="form-group">
-          <label>Email</label>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} required />
-        </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Spinner size={16} /> Registering…
-            </>
-          ) : (
-            "Register"
-          )}
-        </button>
-      </form>
-      <p style={{ marginTop: "1rem" }}>
-        Already have an account? <Link to="/login">Log in</Link>
-      </p>
+        {error && <p className="error">{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Choose a username"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Email</label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="you@example.com"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Create a password"
+              required
+            />
+          </div>
+          <button type="submit" disabled={loading} style={{ width: "100%" }}>
+            {loading ? (
+              <>
+                <Spinner size={16} /> Creating account…
+              </>
+            ) : (
+              "Create account"
+            )}
+          </button>
+        </form>
+        <p style={{ marginTop: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>
+          Already have an account? <Link to="/login">Sign in</Link>
+        </p>
+      </div>
     </div>
   );
 }

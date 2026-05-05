@@ -29,36 +29,47 @@ function Login() {
   };
 
   return (
-    <div className="container">
-      <h1>MACE — Login</h1>
-      {error && <p className="error">{error}</p>}
-      <form onSubmit={handleSubmit}>
-        <div className="form-group">
-          <label>Username</label>
-          <input value={username} onChange={(e) => setUsername(e.target.value)} required />
+    <div className="auth-wrapper">
+      <div className="auth-card">
+        <div className="logo">
+          <h1>MACE</h1>
+          <p>Multi-Agent Coordination Engine</p>
         </div>
-        <div className="form-group">
-          <label>Password</label>
-          <input
-            type="password"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-            required
-          />
-        </div>
-        <button type="submit" disabled={loading}>
-          {loading ? (
-            <>
-              <Spinner size={16} /> Logging in…
-            </>
-          ) : (
-            "Log in"
-          )}
-        </button>
-      </form>
-      <p style={{ marginTop: "1rem" }}>
-        No account? <Link to="/register">Register</Link>
-      </p>
+        {error && <p className="error">{error}</p>}
+        <form onSubmit={handleSubmit}>
+          <div className="form-group">
+            <label>Username</label>
+            <input
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="Enter your username"
+              required
+            />
+          </div>
+          <div className="form-group">
+            <label>Password</label>
+            <input
+              type="password"
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="Enter your password"
+              required
+            />
+          </div>
+          <button type="submit" disabled={loading} style={{ width: "100%" }}>
+            {loading ? (
+              <>
+                <Spinner size={16} /> Signing in…
+              </>
+            ) : (
+              "Sign in"
+            )}
+          </button>
+        </form>
+        <p style={{ marginTop: "1.25rem", textAlign: "center", color: "#94a3b8", fontSize: "0.875rem" }}>
+          Don't have an account? <Link to="/register">Create one</Link>
+        </p>
+      </div>
     </div>
   );
 }

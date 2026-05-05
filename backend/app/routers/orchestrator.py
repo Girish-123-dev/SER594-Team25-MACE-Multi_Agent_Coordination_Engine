@@ -6,6 +6,7 @@ from pydantic import BaseModel
 from app.routers.auth import get_current_user
 from app.services.database import get_db, Database
 from app.orchestrator.pipeline import run_orchestration
+from app.memory.conversation import get_conversation_memory
 
 logger = logging.getLogger(__name__)
 router = APIRouter()
@@ -53,3 +54,16 @@ async def get_tasks(user=Depends(get_current_user), db: Database = Depends(get_d
         }
         for r in rows
     ]
+
+
+@router.get("/history")
+async def get_conversation_history(user=Depends(get_current_user), db: Database = Depends(get_db)):
+    """Get conversation history for the current user."""
+    memory = get_conversation_memory(db)
+    history = memory.get_history(user["id"], limit=50)
+    context = memory.get_context(user["id"])
+    return {
+        "messages": history,
+        "summary": context.get("summary"),
+        "total_messages": context.get("total_messages", 0),
+    }
