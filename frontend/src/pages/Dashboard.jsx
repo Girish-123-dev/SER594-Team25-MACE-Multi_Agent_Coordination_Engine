@@ -3,11 +3,12 @@ import { useNavigate } from "react-router-dom";
 import api from "../services/api";
 import Spinner from "../components/Spinner";
 
+let _nextId = 0;
+
 function Dashboard() {
   const [message, setMessage] = useState("");
   const [responses, setResponses] = useState([]);
   const [tasks, setTasks] = useState([]);
-  const [loading, setLoading] = useState(false);
   const chatEndRef = useRef(null);
   const navigate = useNavigate();
 
@@ -29,42 +30,44 @@ function Dashboard() {
 
   useEffect(() => {
     chatEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  }, [responses, loading]);
+  }, [responses]);
 
   const handleSend = async (e) => {
     e.preventDefault();
     if (!message.trim()) return;
-    setLoading(true);
+    const sentMessage = message;
+    const id = ++_nextId;
+    setMessage("");
+
+    // Add a "processing" placeholder immediately
+    setResponses((prev) => [
+      ...prev,
+      { id, user: sentMessage, loading: true, reply: null, tasks: [], conflicts: [] },
+    ]);
+
     try {
-      const { data } = await api.post("/orchestrator/run", { message });
-      setResponses((prev) => [
-        ...prev,
-        {
-          user: message,
-          reply: data.reply,
-          tasks: data.tasks || [],
-          conflicts: data.conflicts || [],
-        },
-      ]);
-      setMessage("");
+      const { data } = await api.post("/orchestrator/run", { message: sentMessage });
+      setResponses((prev) =>
+        prev.map((r) =>
+          r.id === id
+            ? { ...r, loading: false, reply: data.reply, tasks: data.tasks || [], conflicts: data.conflicts || [] }
+            : r
+        )
+      );
       fetchTasks();
     } catch (err) {
       if (err.response?.status === 401) {
         localStorage.removeItem("token");
         navigate("/login");
       } else {
-        setResponses((prev) => [
-          ...prev,
-          {
-            user: message,
-            reply: "Error: " + (err.response?.data?.detail || "Request failed"),
-            tasks: [],
-            conflicts: [],
-          },
-        ]);
+        setResponses((prev) =>
+          prev.map((r) =>
+            r.id === id
+              ? { ...r, loading: false, reply: "Error: " + (err.response?.data?.detail || "Request failed"), tasks: [], conflicts: [] }
+              : r
+          )
+        );
       }
-    } finally {
-      setLoading(false);
     }
   };
 
@@ -94,7 +97,7 @@ function Dashboard() {
 
       {/* Chat Area */}
       <div className="chat-container">
-        {responses.length === 0 && !loading && (
+        {responses.length === 0 && (
           <div className="chat-empty">
             <div className="chat-empty-icon">⚡</div>
             <p>Welcome to MACE</p>
@@ -103,14 +106,25 @@ function Dashboard() {
         )}
 
         {responses.map((r, i) => (
-          <div key={i}>
+          <div key={r.id || i}>
             {/* User message */}
             <div className="msg msg-user">
               <span className="msg-label">You</span>
               <div className="msg-bubble">{r.user}</div>
             </div>
 
-            {/* Assistant message */}
+            {/* Assistant message or loading indicator */}
+            {r.loading ? (
+              <div className="msg msg-assistant">
+                <span className="msg-label">MACE</span>
+                <div className="msg-bubble">
+                  <div className="processing" style={{ margin: 0 }}>
+                    <Spinner size={18} />
+                    Agents are processing your request…
+                  </div>
+                </div>
+              </div>
+            ) : (
             <div className="msg msg-assistant">
               <span className="msg-label">MACE</span>
               <div className="msg-bubble">{r.reply}</div>
@@ -142,15 +156,10 @@ function Dashboard() {
                 </div>
               )}
             </div>
+            )}
           </div>
         ))}
 
-        {loading && (
-          <div className="processing">
-            <Spinner size={18} />
-            Agents are processing your request…
-          </div>
-        )}
         <div ref={chatEndRef} />
       </div>
 
@@ -161,8 +170,8 @@ function Dashboard() {
           value={message}
           onChange={(e) => setMessage(e.target.value)}
         />
-        <button type="submit" className="btn-send" disabled={loading}>
-          {loading ? <Spinner size={16} /> : "Send"}
+        <button type="submit" className="btn-send">
+          Send
         </button>
       </form>
 

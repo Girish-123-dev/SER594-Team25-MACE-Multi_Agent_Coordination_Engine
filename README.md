@@ -15,7 +15,7 @@ MACE is a multi-agent orchestration system that coordinates specialized AI agent
 
 ## Architecture
 
-> Full Mermaid diagram: [docs/architecture.mmd](docs/architecture.mmd)
+> Full Mermaid diagram: [docs/architecture.mmd](docs/architecture.mmd) | PDF export: [docs/Architecture_Diagram.pdf](docs/Architecture_Diagram.pdf)
 
 ```
 ┌──────────────────────────────────────────────────────────────┐
@@ -86,9 +86,14 @@ MACE is a multi-agent orchestration system that coordinates specialized AI agent
 ├── tests/
 │   └── backend/            # 48 pytest tests (API, DB, FAISS, LLM, Pipeline, Agents, Conversation)
 ├── docs/
-│   ├── architecture.mmd    # Mermaid architecture diagram
-│   └── PROJECT_PLAN.txt    # Full project plan
-├── eval/                   # Evaluation scripts
+│   ├── architecture.mmd       # Mermaid architecture diagram
+│   ├── Architecture_Diagram.pdf  # Exported architecture diagram
+│   ├── DESIGN.md              # Design decisions, trade-offs, lessons learned
+│   └── PROJECT_PLAN.txt       # Full project plan
+├── eval/                      # Evaluation suite
+│   ├── run_eval.py            # Automated evaluation script (5 metrics)
+│   ├── results.json           # Latest evaluation results
+│   └── README.md              # Evaluation methodology documentation
 ├── .github/workflows/ci.yml
 ├── docker-compose.yml
 ├── pyproject.toml          # Black config
@@ -185,6 +190,40 @@ cd frontend && npm test
 ```
 
 CI runs automatically on every push and pull request via GitHub Actions (`.github/workflows/ci.yml`).
+
+## Evaluation
+
+The evaluation suite computes 5 quantitative metrics with baseline comparisons. Full methodology is documented in [`eval/README.md`](eval/README.md).
+
+```bash
+# Offline metrics (no running server needed)
+python3 eval/run_eval.py
+
+# Include live API latency measurement (requires running backend)
+python3 eval/run_eval.py --live
+```
+
+**Latest Results:**
+
+| Metric | Result |
+|--------|--------|
+| Duplicate Detection Precision | **1.0** (no false positives) |
+| Duplicate Detection Recall | **0.6** (3/5 duplicates caught at threshold 0.85) |
+| Duplicate Detection F1 | **0.75** |
+| Embedding Separability Gap | **+0.175** (support) / **+0.133** (domain) vs inter-class |
+| Intent Routing Accuracy | **100%** (8/8 correct) |
+| Agent Tool-Step Consistency | **Both agents consistent** (4 steps each) |
+| Response Latency p50 | ~9.4s (end-to-end including LLM call) |
+| Error Rate | 20% (1/5 requests) |
+
+**Baseline comparison:** Without MACE, duplicate requests are always reprocessed (recall=0%), all tasks go to a single agent (routing accuracy ~50%), and follow-up messages lose all context. See [`eval/results.json`](eval/results.json) for full details.
+
+## Design Decisions & Lessons Learned
+
+See [`docs/DESIGN.md`](docs/DESIGN.md) for detailed documentation of:
+- Design decisions (LLM provider choice, database, index type, pipeline architecture)
+- Trade-offs (simplicity vs. sophistication, SQLite vs. distributed DB, 2 agents vs. many)
+- Lessons learned (LLM output parsing, model loading, FAISS persistence, threshold tuning, testing AI components)
 
 ## How to Authenticate
 

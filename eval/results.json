@@ -1,0 +1,308 @@
+{
+  "duplicate_detection": {
+    "metric": "Duplicate Detection",
+    "threshold": 0.85,
+    "precision": 1.0,
+    "recall": 0.6,
+    "f1_score": 0.75,
+    "accuracy": 0.8,
+    "true_positives": 3,
+    "false_positives": 0,
+    "true_negatives": 5,
+    "false_negatives": 2,
+    "total_pairs": 10,
+    "details": [
+      {
+        "query_a": "Reset my VPN password",
+        "query_b": "I need to reset my VPN password",
+        "similarity": 0.9674,
+        "expected_duplicate": true,
+        "predicted_duplicate": true,
+        "correct": true
+      },
+      {
+        "query_a": "My laptop keeps crashing when I open Excel",
+        "query_b": "Excel crashes my laptop every time",
+        "similarity": 0.9637,
+        "expected_duplicate": true,
+        "predicted_duplicate": true,
+        "correct": true
+      },
+      {
+        "query_a": "I forgot my email password",
+        "query_b": "I forgot my email password",
+        "similarity": 1.0,
+        "expected_duplicate": true,
+        "predicted_duplicate": true,
+        "correct": true
+      },
+      {
+        "query_a": "Set up a CI/CD pipeline for our repo",
+        "query_b": "Configure continuous integration for the project",
+        "similarity": 0.4169,
+        "expected_duplicate": true,
+        "predicted_duplicate": false,
+        "correct": false
+      },
+      {
+        "query_a": "How do I connect to the company VPN?",
+        "query_b": "VPN connection instructions",
+        "similarity": 0.7371,
+        "expected_duplicate": true,
+        "predicted_duplicate": false,
+        "correct": false
+      },
+      {
+        "query_a": "Reset my VPN password",
+        "query_b": "Explain the difference between TCP and UDP",
+        "similarity": -0.0211,
+        "expected_duplicate": false,
+        "predicted_duplicate": false,
+        "correct": true
+      },
+      {
+        "query_a": "My laptop keeps crashing",
+        "query_b": "What is the capital of France?",
+        "similarity": 0.0541,
+        "expected_duplicate": false,
+        "predicted_duplicate": false,
+        "correct": true
+      },
+      {
+        "query_a": "Set up a CI/CD pipeline",
+        "query_b": "I need a new monitor for my desk",
+        "similarity": -0.0125,
+        "expected_duplicate": false,
+        "predicted_duplicate": false,
+        "correct": true
+      },
+      {
+        "query_a": "How do I connect to VPN?",
+        "query_b": "Schedule a meeting with the design team",
+        "similarity": 0.0705,
+        "expected_duplicate": false,
+        "predicted_duplicate": false,
+        "correct": true
+      },
+      {
+        "query_a": "Install Python 3.11 on my machine",
+        "query_b": "Our production database is down",
+        "similarity": -0.0065,
+        "expected_duplicate": false,
+        "predicted_duplicate": false,
+        "correct": true
+      }
+    ]
+  },
+  "embedding_quality": {
+    "metric": "Embedding Quality (Separability)",
+    "intra_class_support_similarity": 0.1656,
+    "intra_class_domain_similarity": 0.1238,
+    "inter_class_similarity": -0.0096,
+    "separation_gap_support": 0.1752,
+    "separation_gap_domain": 0.1333,
+    "interpretation": "Higher intra-class and lower inter-class similarity indicates the embedding model can distinguish support queries from domain queries."
+  },
+  "routing_accuracy": {
+    "metric": "Intent Routing Accuracy",
+    "accuracy": 1.0,
+    "correct": 8,
+    "total": 8,
+    "details": [
+      {
+        "intent_type": "support_ticket",
+        "requires_agents": [
+          "support"
+        ],
+        "expected_agent": "support",
+        "actual_agent": "support",
+        "correct": true
+      },
+      {
+        "intent_type": "faq_query",
+        "requires_agents": [
+          "support"
+        ],
+        "expected_agent": "support",
+        "actual_agent": "support",
+        "correct": true
+      },
+      {
+        "intent_type": "escalation",
+        "requires_agents": [
+          "support"
+        ],
+        "expected_agent": "support",
+        "actual_agent": "support",
+        "correct": true
+      },
+      {
+        "intent_type": "domain_lookup",
+        "requires_agents": [
+          "domain"
+        ],
+        "expected_agent": "domain",
+        "actual_agent": "domain",
+        "correct": true
+      },
+      {
+        "intent_type": "general",
+        "requires_agents": [
+          "support"
+        ],
+        "expected_agent": "support",
+        "actual_agent": "support",
+        "correct": true
+      },
+      {
+        "intent_type": "general",
+        "requires_agents": [
+          "domain"
+        ],
+        "expected_agent": "domain",
+        "actual_agent": "domain",
+        "correct": true
+      },
+      {
+        "intent_type": "multi_step",
+        "requires_agents": [
+          "support",
+          "domain"
+        ],
+        "expected_agent": "both",
+        "actual_agent": "both",
+        "correct": true
+      },
+      {
+        "intent_type": "general",
+        "requires_agents": [],
+        "expected_agent": "support",
+        "actual_agent": "support",
+        "correct": true
+      }
+    ]
+  },
+  "agent_tool_steps": {
+    "metric": "Agent Tool-Step Consistency",
+    "all_consistent": true,
+    "agents": [
+      {
+        "agent": "support",
+        "expected_tools": [
+          "knowledge_lookup",
+          "classify_priority",
+          "generate_response",
+          "escalation_check"
+        ],
+        "actual_tools": [
+          "knowledge_lookup",
+          "classify_priority",
+          "generate_response",
+          "escalation_check"
+        ],
+        "expected_step_count": 4,
+        "actual_step_count": 4,
+        "consistent": true
+      },
+      {
+        "agent": "domain",
+        "expected_tools": [
+          "extract_entities",
+          "semantic_search",
+          "synthesize_answer",
+          "validate_response"
+        ],
+        "actual_tools": [
+          "extract_entities",
+          "semantic_search",
+          "synthesize_answer",
+          "validate_response"
+        ],
+        "expected_step_count": 4,
+        "actual_step_count": 4,
+        "consistent": true
+      }
+    ]
+  },
+  "response_latency": {
+    "metric": "Response Latency (End-to-End)",
+    "total_requests": 5,
+    "successful_requests": 4,
+    "errors": 1,
+    "error_rate": 0.2,
+    "p50_ms": 9448.2,
+    "p95_ms": 11212.4,
+    "mean_ms": 7079.6,
+    "min_ms": 3434.7,
+    "max_ms": 11212.4,
+    "details": [
+      {
+        "message": "I forgot my password and can't log in",
+        "latency_ms": 11212.4,
+        "status": "ok"
+      },
+      {
+        "message": "Explain the difference between TCP and UDP",
+        "latency_ms": 3434.7,
+        "status": "ok"
+      },
+      {
+        "message": "My laptop keeps crashing when I open Excel",
+        "latency_ms": 4223.0,
+        "status": "ok"
+      },
+      {
+        "message": "What are the SOLID principles in software engineer",
+        "latency_ms": 9448.2,
+        "status": "ok"
+      },
+      {
+        "message": "Our production database is completely down",
+        "latency_ms": 7383.8,
+        "status": "error_500"
+      }
+    ]
+  },
+  "baseline_comparison": {
+    "metric": "Baseline Comparison",
+    "duplicate_detection": {
+      "baseline": {
+        "method": "No deduplication (every request processed independently)",
+        "precision": "N/A",
+        "recall": 0.0,
+        "wasted_work": "100% of duplicate requests are reprocessed"
+      },
+      "mace": {
+        "method": "FAISS cosine similarity (threshold=0.85)",
+        "precision": 1.0,
+        "recall": 0.6,
+        "f1_score": 0.75,
+        "improvement": "Detects 3/5 duplicates, eliminating redundant processing"
+      }
+    },
+    "intent_routing": {
+      "baseline": {
+        "method": "Single agent handles all requests (no routing)",
+        "accuracy": "50% (only correct when the task happens to match the default agent)",
+        "problem": "Domain queries handled by support agent, and vice versa"
+      },
+      "mace": {
+        "method": "LLM intent parsing + rule-based routing",
+        "accuracy": 1.0,
+        "improvement": "8/8 correct assignments"
+      }
+    },
+    "conversation_memory": {
+      "baseline": {
+        "method": "Stateless \u2014 each request processed in isolation",
+        "context_retention": "0 messages",
+        "problem": "Follow-up questions lose all context"
+      },
+      "mace": {
+        "method": "Per-user conversation history with LLM summarization",
+        "context_retention": "Last 10 messages + summary of older messages",
+        "improvement": "Agents receive full conversation context for every request"
+      }
+    }
+  }
+}
